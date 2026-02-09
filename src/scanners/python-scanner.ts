@@ -10,6 +10,26 @@ const FROM_IMPORT_RE = /^from\s+([\w.]+)\s+import\s+(.+)/gm;
 const DEF_RE = /^(?:def|class)\s+(\w+)/gm;
 const ALL_RE = /__all__\s*=\s*\[([^\]]*)\]/s;
 
+/**
+ * Collapse multi-line Python imports into single lines for regex matching.
+ * Converts:
+ *   from app.models import (
+ *       User,
+ *       Session,
+ *   )
+ * Into:
+ *   from app.models import User, Session
+ */
+function collapseMultilineImports(content: string): string {
+  return content.replace(
+    /^(from\s+[\w.]+\s+import\s+)\(\s*\n([\s\S]*?)\)/gm,
+    (_match, prefix: string, body: string) => {
+      const names = body.split(',').map(n => n.trim()).filter(Boolean).join(', ');
+      return prefix + names;
+    },
+  );
+}
+
 const PY_ENTRY_NAMES = new Set([
   'main.py', 'app.py', 'server.py', 'wsgi.py', 'asgi.py',
   'manage.py', 'cli.py', '__main__.py', 'setup.py',
@@ -26,8 +46,9 @@ export class PythonScanner implements ScannerPlugin {
     const issues: Issue[] = [];
 
     for (const file of files) {
-      const content = readFileSync(file, 'utf-8');
-      const lines = content.split('\n');
+      const rawContent = readFileSync(file, 'utf-8');
+      const content = collapseMultilineImports(rawContent);
+      const lines = rawContent.split('\n');
 
       // Extract exports (def/class at top level)
       for (const match of content.matchAll(DEF_RE)) {
@@ -60,7 +81,7 @@ export class PythonScanner implements ScannerPlugin {
         const resolved = resolvePythonImport(modulePath, config.rootDir, allFileSet);
 
         for (const name of names) {
-          if (name === '(' || name === ')' || name === '\\') continue;
+          if (!name || name === '(' || name === ')' || name === '\\') continue;
           imports.push({
             name,
             fromModule: modulePath,

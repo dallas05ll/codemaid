@@ -3,10 +3,10 @@ import path from 'node:path';
 import { generateDefaultConfig } from '../core/config.js';
 import * as logger from '../utils/logger.js';
 
-export async function runInit(rootDir: string): Promise<void> {
+export async function runInit(rootDir: string, options: { force?: boolean } = {}): Promise<void> {
   const configPath = path.join(rootDir, '.codemaidrc.json');
 
-  if (existsSync(configPath)) {
+  if (existsSync(configPath) && !options.force) {
     logger.warn('.codemaidrc.json already exists. Use --force to overwrite.');
     return;
   }

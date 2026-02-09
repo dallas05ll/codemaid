@@ -10,6 +10,9 @@ const REQUIRE_RE = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 const DYNAMIC_IMPORT_RE = /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 const EXPORT_NAMED_RE = /export\s+(?:const|let|var|function|class|type|interface|enum)\s+(\w+)/g;
 const EXPORT_DEFAULT_RE = /export\s+default\s+(?:function|class)?\s*(\w+)?/g;
+// Re-export patterns: export { X, Y } from './module' and export * from './module'
+const REEXPORT_NAMED_RE = /export\s+(?:type\s+)?\{([^}]*)\}\s+from\s+['"]([^'"]+)['"]/g;
+const REEXPORT_STAR_RE = /export\s+\*\s+(?:as\s+\w+\s+)?from\s+['"]([^'"]+)['"]/g;
 
 const JS_ENTRY_NAMES = new Set([
   'index.js', 'index.ts', 'index.tsx', 'main.js', 'main.ts',
@@ -53,6 +56,50 @@ export class JavaScriptScanner implements ScannerPlugin {
           filePath: file,
           line: lineNumber(content, match.index!),
           kind: 'default',
+        });
+      }
+
+      // Extract re-exports: export { X, Y } from './module'
+      // These are both an export AND an import — register both sides
+      for (const match of content.matchAll(new RegExp(REEXPORT_NAMED_RE.source, REEXPORT_NAMED_RE.flags))) {
+        const names = match[1].split(',').map(n => n.trim().split(/\s+as\s+/)[0].trim()).filter(Boolean);
+        const specifier = match[2];
+        const isBar = isBareImport(specifier);
+        const resolved = isBar ? null : resolveJsImport(specifier, file, allFileSet);
+        const pkgName = extractPackageName(specifier);
+        if (pkgName) importedPackages.add(pkgName);
+
+        for (const name of names) {
+          exports.push({
+            name,
+            filePath: file,
+            line: lineNumber(content, match.index!),
+            kind: match[0].includes('type') ? 'type' : 'module',
+          });
+          imports.push({
+            name,
+            fromModule: specifier,
+            filePath: file,
+            line: lineNumber(content, match.index!),
+            resolved: isBar ? 'external' : (resolved ?? undefined),
+          });
+        }
+      }
+
+      // Extract re-exports: export * from './module'
+      for (const match of content.matchAll(new RegExp(REEXPORT_STAR_RE.source, REEXPORT_STAR_RE.flags))) {
+        const specifier = match[1];
+        const isBar = isBareImport(specifier);
+        const resolved = isBar ? null : resolveJsImport(specifier, file, allFileSet);
+        const pkgName = extractPackageName(specifier);
+        if (pkgName) importedPackages.add(pkgName);
+
+        imports.push({
+          name: '*',
+          fromModule: specifier,
+          filePath: file,
+          line: lineNumber(content, match.index!),
+          resolved: isBar ? 'external' : (resolved ?? undefined),
         });
       }
 

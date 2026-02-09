@@ -12,7 +12,7 @@ const program = new Command();
 program
   .name('codemaid')
   .description('Dead code detector and codebase hygiene tool')
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('scan')
@@ -137,8 +137,9 @@ program
   .command('init')
   .description('Create a .codemaidrc.json configuration file')
   .argument('[dir]', 'Project directory', '.')
-  .action(async (dir: string) => {
-    await runInit(dir);
+  .option('--force', 'Overwrite existing .codemaidrc.json')
+  .action(async (dir: string, opts: Record<string, boolean>) => {
+    await runInit(dir, { force: opts.force });
   });
 
 // Default action: run scan
