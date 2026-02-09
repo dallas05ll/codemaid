@@ -5,3 +5,4 @@ dist/
 .codemaidrc.json
 .DS_Store
 tests/
+package-lock.json
