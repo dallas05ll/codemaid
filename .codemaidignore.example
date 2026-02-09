@@ -1,0 +1,17 @@
+# Directories
+node_modules/
+.venv/
+__pycache__/
+dist/
+build/
+.git/
+coverage/
+.next/
+.nuxt/
+
+# Files
+*.pyc
+*.pyo
+*.min.js
+*.map
+*.lock

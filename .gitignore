@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.codemaid-report.json
+.codemaidrc.json
+.DS_Store

@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0.0",
+  "name": "codemaid",
+  "version": "1.1.0",
+  "description": "Dead code detector and codebase hygiene tool with confidence-tagged results",
+  "package": "codemaid",
+  "install": "npm install -g codemaid",
+  "runtime": "node",
+  "min_node": "18.0.0",
+
+  "capabilities": [
+    "dead-file-detection",
+    "unused-export-detection",
+    "stale-reference-detection",
+    "unused-dependency-detection",
+    "doc-drift-detection",
+    "modularity-analysis",
+    "interactive-cleanup",
+    "backup-and-rollback"
+  ],
+
+  "languages": [
+    { "name": "javascript", "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"] },
+    { "name": "python", "extensions": [".py"] },
+    { "name": "markdown", "extensions": [".md"] },
+    { "name": "css", "extensions": [".css"] },
+    { "name": "config", "extensions": [".json", ".yml", ".yaml", ".toml", ".env"] }
+  ],
+
+  "commands": {
+    "scan": {
+      "description": "Scan a directory for dead code and hygiene issues",
+      "cli": "npx codemaid scan {dir} --format json",
+      "args": {
+        "dir": { "type": "string", "default": ".", "description": "Directory to scan" },
+        "only": { "type": "string", "optional": true, "enum": ["python", "js", "docs", "css", "config"], "description": "Scan only a specific language" },
+        "format": { "type": "string", "default": "json", "enum": ["json", "console"], "description": "Output format" },
+        "config": { "type": "string", "optional": true, "description": "Path to .codemaidrc.json" }
+      },
+      "output": {
+        "format": "json",
+        "schema": "ScanReport",
+        "stdout": true
+      },
+      "exit_codes": {
+        "0": "Scan complete, no errors",
+        "1": "Scan complete, errors found",
+        "2": "Configuration error"
+      }
+    },
+    "clean": {
+      "description": "Interactively fix detected issues (human-only, not for agents)",
+      "cli": "npx codemaid clean {dir}",
+      "agent_safe": false,
+      "args": {
+        "dir": { "type": "string", "default": "." },
+        "dry_run": { "type": "boolean", "default": false, "description": "Preview changes without modifying" },
+        "auto": { "type": "boolean", "default": false, "description": "Auto-fix all actionable issues" }
+      }
+    },
+    "report": {
+      "description": "Show the last cached scan report",
+      "cli": "npx codemaid report {dir} --format json",
+      "args": {
+        "dir": { "type": "string", "default": "." },
+        "format": { "type": "string", "default": "json", "enum": ["json", "console"] },
+        "detail": { "type": "string", "optional": true, "enum": ["dead-files", "unused-exports", "stale-refs", "unused-deps", "doc-drift", "modularity"] }
+      },
+      "output": {
+        "format": "json",
+        "schema": "ScanReport",
+        "stdout": true
+      }
+    },
+    "init": {
+      "description": "Create a .codemaidrc.json configuration file",
+      "cli": "npx codemaid init {dir}",
+      "agent_safe": false,
+      "args": {
+        "dir": { "type": "string", "default": "." }
+      }
+    }
+  },
+
+  "programmatic_api": {
+    "import": "codemaid/agent",
+    "function": "scanProject",
+    "signature": "scanProject(dir: string, options?: { only?: string, minConfidence?: 'high' | 'medium' | 'low' }) => Promise<ScanReport>"
+  },
+
+  "issue_categories": {
+    "dead-file": { "description": "File not imported by any other file and not an entry point", "default_action": "delete" },
+    "stale-reference": { "description": "Import or link points to a file/module that does not exist", "default_action": "update" },
+    "unused-dependency": { "description": "Package listed in dependencies but never imported", "default_action": "update" },
+    "unused-export": { "description": "Exported symbol not imported by any file in the project", "default_action": "skip" },
+    "doc-drift": { "description": "Documentation references something that no longer exists", "default_action": "update" },
+    "modularity": { "description": "File exceeds size or export thresholds", "default_action": "skip" }
+  },
+
+  "confidence_levels": {
+    "high": "Safe to act on automatically. File has no special context (not a barrel, test, or type-only).",
+    "medium": "Verify before acting. May be consumed indirectly (e.g., type exports via declaration merging).",
+    "low": "Usually skip. Barrel files (index.ts) and test helpers are intentionally structured this way."
+  },
+
+  "safety": {
+    "backup_before_modify": true,
+    "pre_flight_file_check": true,
+    "precise_regex_matching": true,
+    "dry_run_available": true,
+    "config_validation": true,
+    "rollback_on_failure": true
+  },
+
+  "claude_flow": {
+    "agent_type": "code-analyzer",
+    "swarm_role": "specialist",
+    "model_tier": "haiku",
+    "coordination": "parallel",
+    "triggers": ["/codemaid", "clean up code", "dead code", "unused files", "audit codebase"]
+  }
+}

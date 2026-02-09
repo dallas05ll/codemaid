@@ -1,0 +1,74 @@
+{
+  "name": "codemaid",
+  "version": "1.1.0",
+  "description": "Dead code detector and codebase hygiene tool for Python, JS/TS, and Markdown projects",
+  "type": "module",
+  "bin": {
+    "codemaid": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./agent": {
+      "import": "./dist/agent.js",
+      "types": "./dist/agent.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup && node -e \"const fs=require('fs');const f='dist/cli.js';const c=fs.readFileSync(f,'utf8');if(!c.startsWith('#!')){fs.writeFileSync(f,'#!/usr/bin/env node\\n'+c)}\" && chmod +x dist/cli.js",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "dead-code",
+    "cleanup",
+    "hygiene",
+    "unused-imports",
+    "unused-exports",
+    "codebase-health",
+    "lint",
+    "static-analysis",
+    "agent-plugin"
+  ],
+  "author": "dallas05ll",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dallas05ll/codemaid.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "boxen": "^8.0.0",
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.0.0",
+    "fast-glob": "^3.3.0",
+    "js-yaml": "^4.1.0",
+    "ora": "^8.0.0",
+    "picomatch": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/picomatch": "^3.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
