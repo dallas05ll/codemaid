@@ -1,6 +1,6 @@
 {
   "name": "codemaid",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Dead code detector and codebase hygiene tool for Python, JS/TS, and Markdown projects",
   "type": "module",
   "bin": {
